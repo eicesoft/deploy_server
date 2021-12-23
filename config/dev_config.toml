@@ -1,0 +1,30 @@
+[Server]
+name = "deploy_server"
+
+[mysql]
+[mysql.read] # 从库信息，可读
+    addr = '192.168.1.25:3306'      # MySQL 地址:端口
+    user = 'root'                   # 用户名
+    pass = 'HundyG63gF%42sdf'       # 密码
+    name = 'deploy'                 # 数据库名称
+[mysql.write] # 主库信息，可读写
+    addr = '192.168.1.25:3306'      # MySQL 地址:端口
+    user = 'root'                   # 用户名
+    pass = 'HundyG63gF%42sdf'       # 密码
+    name = 'deploy'                 # 数据库名称
+[mysql.base] # 基础配置
+    maxOpenConn = 10             # 最大打开的连接数
+    maxIdleConn = 60             # 闲置的连接数
+    connMaxLifeTime = 60         # 最大连接超时(单位:分)
+
+[redis]
+addr = '192.168.1.21:6379'       # Redis 地址:端口
+pass = ''                        # 密码
+db = 3                           # 序号从 0 开始，默认是0，可以不用设置
+maxRetries = 3                   # 命令执行失败时，最多重试多少次，默认为 0 即不重试
+poolSize = 10                    # 连接池最大连接数，默认为 CPU 数 * 10
+minIdleConns = 5                 # 连接池初始连接数量
+
+[jwt]
+secret = '21ddG1tdHyuJTrw7retY'  # JWT secret
+expireDuration = 12              # JWT ExpiresAt 过期时间(单位:小时)
