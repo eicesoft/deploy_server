@@ -27,6 +27,7 @@ var (
 
 func init() {
 	genCmd.AddCommand(gen.ModelCmd)
+	genCmd.AddCommand(gen.ServiceCmd)
 
 	genCmd.Flags().StringVarP(&controllerName, "cont", "", "", "[Required] The name of the controller name")
 

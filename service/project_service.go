@@ -7,14 +7,14 @@ import (
 	"deploy_server/pkg/db"
 )
 
-type WrapBuilderFunc func(*project.QueryBuilder) *project.QueryBuilder
+type WrapProjectBuilderFunc func(*project.QueryBuilder) *project.QueryBuilder
 
 type ProjectService struct {
 	service
 }
 
 // Get 利用warp函数进行Builder构造条件获得单条数据
-func (s *ProjectService) Get(ctx context.Context, warp WrapBuilderFunc) (p *project.Project, err error) {
+func (s *ProjectService) Get(ctx context.Context, warp WrapProjectBuilderFunc) (p *project.Project, err error) {
 	p, err = warp(project.NewQueryBuilder()).
 		QueryOne(s.GetDBReader(ctx))
 
@@ -22,7 +22,7 @@ func (s *ProjectService) Get(ctx context.Context, warp WrapBuilderFunc) (p *proj
 }
 
 // GetAll 利用warp函数进行Builder构造条件获得列表数据
-func (s *ProjectService) GetAll(ctx context.Context, warp WrapBuilderFunc) ([]*project.Project, error) {
+func (s *ProjectService) GetAll(ctx context.Context, warp WrapProjectBuilderFunc) ([]*project.Project, error) {
 	list, err := warp(project.NewQueryBuilder()).
 		QueryAll(s.GetDBReader(ctx))
 
@@ -30,7 +30,7 @@ func (s *ProjectService) GetAll(ctx context.Context, warp WrapBuilderFunc) ([]*p
 }
 
 // GetPages 利用warp函数进行Builder构造条件获得分页数据
-func (s *ProjectService) GetPages(ctx context.Context, page int, pageSize int, warp WrapBuilderFunc) ([]*project.Project, error) {
+func (s *ProjectService) GetPages(ctx context.Context, page int, pageSize int, warp WrapProjectBuilderFunc) ([]*project.Project, error) {
 	list, err := warp(project.NewQueryBuilder()).
 		Limit(pageSize).
 		Offset((page - 1) * pageSize).
@@ -49,7 +49,7 @@ func (s *ProjectService) Create(ctx context.Context, request interface{}) (id in
 }
 
 // Update 利用warp函数进行Builder构造更新条件进行更新
-func (s *ProjectService) Update(ctx context.Context, data map[string]interface{}, warp WrapBuilderFunc) (err error) {
+func (s *ProjectService) Update(ctx context.Context, data map[string]interface{}, warp WrapProjectBuilderFunc) (err error) {
 	err = warp(project.NewQueryBuilder()).
 		Updates(s.GetDBWriter(ctx), data)
 
