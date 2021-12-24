@@ -5,11 +5,11 @@
 
 package role
 
-//go:generate deploy_server gormgen -s Role -i .
+//go:generate gormgen -s Role -i .
 type Role struct {
-	Id       int32  `json:"id"`        //
-	RoleName string `json:"role_name"` //
-	RoleDesc string `json:"role_desc"` //
+	Id       int32  `json:"id" gorm:"type:int"`           //
+	RoleName string `json:"role_name" gorm:"type:string"` //
+	RoleDesc string `json:"role_desc" gorm:"type:string"` //
 }
 
 func (_ *Role) TableName() string {

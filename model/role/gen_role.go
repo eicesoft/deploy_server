@@ -7,23 +7,28 @@ package role
 
 import (
 	"fmt"
-
-	"deploy_server/model"
-	"deploy_server/pkg/core"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+)
+
+type Predicate string
+
+const (
+	EqualPredicate              = Predicate("=")
+	NotEqualPredicate           = Predicate("<>")
+	GreaterThanPredicate        = Predicate(">")
+	GreaterThanOrEqualPredicate = Predicate(">=")
+	SmallerThanPredicate        = Predicate("<")
+	SmallerThanOrEqualPredicate = Predicate("<=")
+	LikePredicate               = Predicate("LIKE")
 )
 
 func NewModel() *Role {
 	return new(Role)
 }
 
-func NewQueryBuilder() *roleQueryBuilder {
-	return new(roleQueryBuilder)
-}
-
-func (t *Role) Assign(src interface{}) {
-	core.StructCopy(t, src)
+func NewQueryBuilder() *QueryBuilder {
+	return new(QueryBuilder)
 }
 
 func (t *Role) Create(db *gorm.DB) (id int32, err error) {
@@ -47,7 +52,7 @@ func (t *Role) Updates(db *gorm.DB, m map[string]interface{}) (err error) {
 	return nil
 }
 
-type roleQueryBuilder struct {
+type QueryBuilder struct {
 	order []string
 	where []struct {
 		prefix string
@@ -57,14 +62,14 @@ type roleQueryBuilder struct {
 	offset int
 }
 
-func (qb *roleQueryBuilder) Updates(db *gorm.DB, m map[string]interface{}) (err error) {
+func (qb *QueryBuilder) Updates(db *gorm.DB, m map[string]interface{}) (err error) {
 	if err = qb.buildUpdateQuery(db).Updates(m).Error; err != nil {
 		return errors.Wrap(err, "updates err")
 	}
 	return nil
 }
 
-func (qb *roleQueryBuilder) buildUpdateQuery(db *gorm.DB) *gorm.DB {
+func (qb *QueryBuilder) buildUpdateQuery(db *gorm.DB) *gorm.DB {
 	ret := db.Model(&Role{})
 	for _, where := range qb.where {
 		ret = ret.Where(where.prefix, where.value)
@@ -72,7 +77,7 @@ func (qb *roleQueryBuilder) buildUpdateQuery(db *gorm.DB) *gorm.DB {
 	return ret
 }
 
-func (qb *roleQueryBuilder) buildQuery(db *gorm.DB) *gorm.DB {
+func (qb *QueryBuilder) buildQuery(db *gorm.DB) *gorm.DB {
 	ret := db
 	for _, where := range qb.where {
 		ret = ret.Where(where.prefix, where.value)
@@ -84,7 +89,7 @@ func (qb *roleQueryBuilder) buildQuery(db *gorm.DB) *gorm.DB {
 	return ret
 }
 
-func (qb *roleQueryBuilder) Count(db *gorm.DB) (int64, error) {
+func (qb *QueryBuilder) Count(db *gorm.DB) (int64, error) {
 	var c int64
 	res := qb.buildQuery(db).Model(&Role{}).Count(&c)
 	if res.Error != nil && res.Error == gorm.ErrRecordNotFound {
@@ -93,7 +98,7 @@ func (qb *roleQueryBuilder) Count(db *gorm.DB) (int64, error) {
 	return c, res.Error
 }
 
-func (qb *roleQueryBuilder) First(db *gorm.DB) (*Role, error) {
+func (qb *QueryBuilder) First(db *gorm.DB) (*Role, error) {
 	ret := &Role{}
 	res := qb.buildQuery(db).First(ret)
 	if res.Error != nil && res.Error == gorm.ErrRecordNotFound {
@@ -102,7 +107,7 @@ func (qb *roleQueryBuilder) First(db *gorm.DB) (*Role, error) {
 	return ret, res.Error
 }
 
-func (qb *roleQueryBuilder) QueryOne(db *gorm.DB) (*Role, error) {
+func (qb *QueryBuilder) QueryOne(db *gorm.DB) (*Role, error) {
 	qb.limit = 1
 	ret, err := qb.QueryAll(db)
 	if len(ret) > 0 {
@@ -111,23 +116,23 @@ func (qb *roleQueryBuilder) QueryOne(db *gorm.DB) (*Role, error) {
 	return nil, err
 }
 
-func (qb *roleQueryBuilder) QueryAll(db *gorm.DB) ([]*Role, error) {
+func (qb *QueryBuilder) QueryAll(db *gorm.DB) ([]*Role, error) {
 	var ret []*Role
 	err := qb.buildQuery(db).Find(&ret).Error
 	return ret, err
 }
 
-func (qb *roleQueryBuilder) Limit(limit int) *roleQueryBuilder {
+func (qb *QueryBuilder) Limit(limit int) *QueryBuilder {
 	qb.limit = limit
 	return qb
 }
 
-func (qb *roleQueryBuilder) Offset(offset int) *roleQueryBuilder {
+func (qb *QueryBuilder) Offset(offset int) *QueryBuilder {
 	qb.offset = offset
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereId(p model.Predicate, value int32) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereId(p Predicate, value int32) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -138,7 +143,7 @@ func (qb *roleQueryBuilder) WhereId(p model.Predicate, value int32) *roleQueryBu
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereIdIn(value []int32) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereIdIn(value []int32) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -149,7 +154,7 @@ func (qb *roleQueryBuilder) WhereIdIn(value []int32) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereIdNotIn(value []int32) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereIdNotIn(value []int32) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -160,7 +165,7 @@ func (qb *roleQueryBuilder) WhereIdNotIn(value []int32) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) OrderById(asc bool) *roleQueryBuilder {
+func (qb *QueryBuilder) OrderById(asc bool) *QueryBuilder {
 	order := "DESC"
 	if asc {
 		order = "ASC"
@@ -170,7 +175,7 @@ func (qb *roleQueryBuilder) OrderById(asc bool) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleName(p model.Predicate, value string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleName(p Predicate, value string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -181,7 +186,7 @@ func (qb *roleQueryBuilder) WhereRoleName(p model.Predicate, value string) *role
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleNameIn(value []string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleNameIn(value []string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -192,7 +197,7 @@ func (qb *roleQueryBuilder) WhereRoleNameIn(value []string) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleNameNotIn(value []string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleNameNotIn(value []string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -203,7 +208,7 @@ func (qb *roleQueryBuilder) WhereRoleNameNotIn(value []string) *roleQueryBuilder
 	return qb
 }
 
-func (qb *roleQueryBuilder) OrderByRoleName(asc bool) *roleQueryBuilder {
+func (qb *QueryBuilder) OrderByRoleName(asc bool) *QueryBuilder {
 	order := "DESC"
 	if asc {
 		order = "ASC"
@@ -213,7 +218,7 @@ func (qb *roleQueryBuilder) OrderByRoleName(asc bool) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleDesc(p model.Predicate, value string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleDesc(p Predicate, value string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -224,7 +229,7 @@ func (qb *roleQueryBuilder) WhereRoleDesc(p model.Predicate, value string) *role
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleDescIn(value []string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleDescIn(value []string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -235,7 +240,7 @@ func (qb *roleQueryBuilder) WhereRoleDescIn(value []string) *roleQueryBuilder {
 	return qb
 }
 
-func (qb *roleQueryBuilder) WhereRoleDescNotIn(value []string) *roleQueryBuilder {
+func (qb *QueryBuilder) WhereRoleDescNotIn(value []string) *QueryBuilder {
 	qb.where = append(qb.where, struct {
 		prefix string
 		value  interface{}
@@ -246,7 +251,7 @@ func (qb *roleQueryBuilder) WhereRoleDescNotIn(value []string) *roleQueryBuilder
 	return qb
 }
 
-func (qb *roleQueryBuilder) OrderByRoleDesc(asc bool) *roleQueryBuilder {
+func (qb *QueryBuilder) OrderByRoleDesc(asc bool) *QueryBuilder {
 	order := "DESC"
 	if asc {
 		order = "ASC"
